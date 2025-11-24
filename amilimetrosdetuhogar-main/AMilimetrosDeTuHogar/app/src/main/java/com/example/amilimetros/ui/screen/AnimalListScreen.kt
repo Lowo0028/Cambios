@@ -17,6 +17,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.example.amilimetros.R
 import com.example.amilimetros.data.local.storage.UserPreferences
 import com.example.amilimetros.data.remote.dto.AnimalDto
@@ -25,8 +27,12 @@ import com.example.amilimetros.ui.viewmodel.AnimalViewModel
 import androidx.compose.ui.layout.ContentScale
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AnimalListScreen(onNavigateToAdoptionForm: (Long) -> Unit) {
+fun AnimalListScreen(
+    navController: NavController = rememberNavController(),
+    onNavigateToAdoptionForm: (Long) -> Unit
+) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val userPrefs = remember { UserPreferences(context) }
@@ -45,44 +51,116 @@ fun AnimalListScreen(onNavigateToAdoptionForm: (Long) -> Unit) {
         isLoggedIn = userPrefs.getIsLoggedIn()
     }
 
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text("🐾 Animales en Adopción", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-            IconButton(onClick = { viewModel.cargarAnimalesDisponibles() }) {
-                Icon(Icons.Filled.Refresh, "Recargar")
-            }
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(Icons.Filled.Pets, "Animales")
+                        Text("Animales en Adopción")
+                    }
+                },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.Filled.ArrowBack, "Volver")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { viewModel.cargarAnimalesDisponibles() }) {
+                        Icon(Icons.Filled.Refresh, "Recargar")
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            )
         }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(horizontal = 16.dp)
+        ) {
+            Spacer(Modifier.height(16.dp))
 
-        Spacer(Modifier.height(16.dp))
-
-        when {
-            isLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-            error != null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(error!!, color = MaterialTheme.colorScheme.error)
-                    Spacer(Modifier.height(8.dp))
-                    Button(onClick = { viewModel.cargarAnimalesDisponibles() }) { Text("Reintentar") }
+            when {
+                isLoading -> Box(
+                    Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        CircularProgressIndicator()
+                        Text("Cargando animales...")
+                    }
                 }
-            }
-            animales.isEmpty() -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("No hay animales disponibles")
-            }
-            else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                items(animales) { animal ->
-                    AnimalCard(
-                        animal = animal,
-                        isLoggedIn = isLoggedIn,
-                        onAdopt = {
-                            if (isLoggedIn) onNavigateToAdoptionForm(animal.id)
-                            else showInfoDialog = true
+
+                error != null -> Box(
+                    Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Icon(
+                            Icons.Filled.Error,
+                            contentDescription = null,
+                            modifier = Modifier.size(64.dp),
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                        Text(
+                            error!!,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Button(onClick = { viewModel.cargarAnimalesDisponibles() }) {
+                            Icon(Icons.Filled.Refresh, null)
+                            Spacer(Modifier.width(8.dp))
+                            Text("Reintentar")
                         }
-                    )
+                    }
+                }
+
+                animales.isEmpty() -> Box(
+                    Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            Icons.Filled.Pets,
+                            contentDescription = null,
+                            modifier = Modifier.size(80.dp),
+                            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+                        )
+                        Text("No hay animales disponibles")
+                    }
+                }
+
+                else -> LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    contentPadding = PaddingValues(vertical = 8.dp)
+                ) {
+                    items(animales) { animal ->
+                        AnimalCard(
+                            animal = animal,
+                            isLoggedIn = isLoggedIn,
+                            onAdopt = {
+                                if (isLoggedIn) onNavigateToAdoptionForm(animal.id)
+                                else showInfoDialog = true
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -91,9 +169,23 @@ fun AnimalListScreen(onNavigateToAdoptionForm: (Long) -> Unit) {
     if (showInfoDialog) {
         AlertDialog(
             onDismissRequest = { showInfoDialog = false },
-            confirmButton = { TextButton(onClick = { showInfoDialog = false }) { Text("Entendido") } },
-            title = { Text("💡 Consejo") },
-            text = { Text("Inicia sesión para adoptar.\n\nTus datos se rellenarán automáticamente 💚") },
+            confirmButton = {
+                TextButton(onClick = { showInfoDialog = false }) {
+                    Text("Entendido")
+                }
+            },
+            title = {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(Icons.Filled.Info, null, tint = MaterialTheme.colorScheme.primary)
+                    Text("Inicia sesión para adoptar")
+                }
+            },
+            text = {
+                Text("Necesitas iniciar sesión para poder solicitar la adopción de un animal.")
+            },
             shape = RoundedCornerShape(16.dp)
         )
     }
@@ -101,29 +193,86 @@ fun AnimalListScreen(onNavigateToAdoptionForm: (Long) -> Unit) {
 
 @Composable
 private fun AnimalCard(animal: AnimalDto, isLoggedIn: Boolean, onAdopt: () -> Unit) {
-    ElevatedCard(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
-        Row(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+    ElevatedCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(animal.nombre, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text(
+                    animal.nombre,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
                 Spacer(Modifier.height(4.dp))
-                Text("${animal.especie} • ${animal.raza}", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(
+                        Icons.Filled.Pets,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        "${animal.especie} • ${animal.raza}",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+
                 Spacer(Modifier.height(4.dp))
-                Text(animal.edad, style = MaterialTheme.typography.bodyMedium)
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(
+                        Icons.Filled.Cake,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.secondary
+                    )
+                    Text(
+                        animal.edad,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+
                 Spacer(Modifier.height(8.dp))
-                Text(animal.descripcion, style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    animal.descripcion,
+                    style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 3
+                )
                 Spacer(Modifier.height(12.dp))
-                Button(onClick = onAdopt, modifier = Modifier.fillMaxWidth()) {
+
+                Button(
+                    onClick = onAdopt,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
                     Icon(Icons.Filled.Favorite, null)
                     Spacer(Modifier.width(8.dp))
                     Text("Solicitar Adopción")
                 }
             }
+
             Spacer(Modifier.width(12.dp))
+
             if (animal.imagen != null) {
-                // Convertir Base64 a Bitmap
                 val bitmap = remember(animal.imagen) {
                     try {
-                        val imageBytes = android.util.Base64.decode(animal.imagen, android.util.Base64.DEFAULT)
+                        val imageBytes = android.util.Base64.decode(
+                            animal.imagen,
+                            android.util.Base64.DEFAULT
+                        )
                         BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
                     } catch (e: Exception) {
                         null
@@ -138,24 +287,30 @@ private fun AnimalCard(animal: AnimalDto, isLoggedIn: Boolean, onAdopt: () -> Un
                         contentScale = ContentScale.Crop
                     )
                 } else {
-                    // Imagen por defecto si falla
                     val drawableRes = when (animal.especie.lowercase()) {
                         "perro" -> R.drawable.perro_placeholder
                         "gato" -> R.drawable.gato_placeholder
                         "conejo" -> R.drawable.conejo_placeholder
                         else -> R.drawable.animal_placeholder
                     }
-                    Image(painter = painterResource(drawableRes), contentDescription = null, modifier = Modifier.size(100.dp))
+                    Image(
+                        painter = painterResource(drawableRes),
+                        contentDescription = null,
+                        modifier = Modifier.size(100.dp)
+                    )
                 }
             } else {
-                // Sin imagen, usar placeholder
                 val drawableRes = when (animal.especie.lowercase()) {
                     "perro" -> R.drawable.perro_placeholder
                     "gato" -> R.drawable.gato_placeholder
                     "conejo" -> R.drawable.conejo_placeholder
                     else -> R.drawable.animal_placeholder
                 }
-                Image(painter = painterResource(drawableRes), contentDescription = null, modifier = Modifier.size(100.dp))
+                Image(
+                    painter = painterResource(drawableRes),
+                    contentDescription = null,
+                    modifier = Modifier.size(100.dp)
+                )
             }
         }
     }

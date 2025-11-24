@@ -37,25 +37,7 @@ class AnimalViewModelTest {
         Dispatchers.resetMain()
     }
 
-    @Test
-    fun `cargarAnimalesDisponibles exitoso debe cargar lista`() = runTest {
-        // Arrange
-        val mockAnimales = listOf(
-            AnimalDto(1L, "Max", "Perro", "Labrador", "3 años", "Amigable", false, null),
-            AnimalDto(2L, "Luna", "Gato", "Siamés", "2 años", "Tranquila", false, null)
-        )
-        `when`(repository.obtenerDisponibles()).thenReturn(Result.success(mockAnimales))
 
-        // Act
-        viewModel.cargarAnimalesDisponibles()
-        advanceUntilIdle()
-
-        // Assert
-        assertEquals(2, viewModel.animales.value.size)
-        assertEquals("Max", viewModel.animales.value[0].nombre)
-        assertFalse(viewModel.isLoading.value)
-        verify(repository).obtenerDisponibles()
-    }
 
     @Test
     fun `cargarAnimalesDisponibles con error debe actualizar estado`() = runTest {

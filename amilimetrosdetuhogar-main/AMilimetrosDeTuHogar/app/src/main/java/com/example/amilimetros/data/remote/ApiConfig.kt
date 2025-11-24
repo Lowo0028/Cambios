@@ -5,13 +5,13 @@ object ApiConfig {
 
     private const val BASE_IP = "192.168.1.10"
 
-    private const val AUTH_BASE_URL = "https://x02n8cpn-8090.brs.devtunnels.ms/"
-    private const val CATALOGO_BASE_URL = "https://x02n8cpn-8091.brs.devtunnels.ms/"
-    private const val CARRITO_BASE_URL = "https://x02n8cpn-8092.brs.devtunnels.ms/"
-    private const val ANIMALES_BASE_URL = "https://x02n8cpn-8093.brs.devtunnels.ms/"
-    private const val FORMULARIO_BASE_URL = "https://x02n8cpn-8094.brs.devtunnels.ms/"
+    private const val AUTH_BASE_URL = "https://5z4g4h4n-8090.brs.devtunnels.ms/"
+    private const val CATALOGO_BASE_URL = "https://5z4g4h4n-8091.brs.devtunnels.ms/"
+    private const val CARRITO_BASE_URL = "https://5z4g4h4n-8092.brs.devtunnels.ms/"
+    private const val ANIMALES_BASE_URL = "https://5z4g4h4n-8093.brs.devtunnels.ms/"
+    private const val FORMULARIO_BASE_URL = "https://5z4g4h4n-8094.brs.devtunnels.ms/"
 
-    private const val ORDEN_BASE_URL = "https://x02n8cpn-8095.brs.devtunnels.ms/"
+    private const val ORDEN_BASE_URL = "https://5z4g4h4n-8095.brs.devtunnels.ms/"
 
 
     private const val LOGO_URL = "" // p.ej. "http://$BASE_IP:8091/assets/logo.png" o "" si no tienes
