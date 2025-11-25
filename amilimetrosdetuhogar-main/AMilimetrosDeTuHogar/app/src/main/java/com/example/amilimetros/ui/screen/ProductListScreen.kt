@@ -15,12 +15,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import com.example.amilimetros.R
 import com.example.amilimetros.data.local.storage.UserPreferences
 import com.example.amilimetros.data.remote.dto.ProductoDto
 import com.example.amilimetros.data.repository.ProductoApiRepository
@@ -46,36 +44,43 @@ fun ProductListScreen(
     val productViewModel = remember { ProductViewModel(productoRepository) }
     val cartViewModel = remember { CartViewModel(carritoRepository, ordenRepository) }
 
+    // ✅ CORRECTO: Usar collectAsState() para observar StateFlows
     val productos by productViewModel.productos.collectAsState()
     val isLoading by productViewModel.isLoading.collectAsState()
     val error by productViewModel.error.collectAsState()
 
+    // ✅ CORRECTO: Observar mensajes del carrito
+    val successMessage by cartViewModel.successMessage.collectAsState()
+    val errorMessage by cartViewModel.error.collectAsState()
+
     var userId by remember { mutableStateOf<Long?>(null) }
-    var showSnackbar by remember { mutableStateOf(false) }
-    var snackbarMessage by remember { mutableStateOf("") }
+    var isLoggedIn by remember { mutableStateOf(false) }
 
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(Unit) {
         userId = userPrefs.getUserId()
+        isLoggedIn = userPrefs.getIsLoggedIn()
+        println("🔍 ProductListScreen - UserId: $userId, IsLoggedIn: $isLoggedIn")
     }
 
-    // Manejar mensajes del carrito
-    LaunchedEffect(cartViewModel.successMessage.value, cartViewModel.error.value) {
-        cartViewModel.successMessage.value?.let { message ->
-            snackbarMessage = message
-            showSnackbar = true
+    // ✅ CORRECTO: Observar cambios en los mensajes
+    LaunchedEffect(successMessage) {
+        successMessage?.let { message ->
+            println("✅ Mostrando mensaje de éxito: $message")
             snackbarHostState.showSnackbar(
                 message = message,
                 duration = SnackbarDuration.Short
             )
             cartViewModel.clearMessages()
         }
-        cartViewModel.error.value?.let { errorMsg ->
-            snackbarMessage = errorMsg
-            showSnackbar = true
+    }
+
+    LaunchedEffect(errorMessage) {
+        errorMessage?.let { message ->
+            println("❌ Mostrando mensaje de error: $message")
             snackbarHostState.showSnackbar(
-                message = errorMsg,
+                message = message,
                 duration = SnackbarDuration.Long
             )
             cartViewModel.clearMessages()
@@ -186,9 +191,28 @@ fun ProductListScreen(
                     items(productos) { product ->
                         ProductCard(
                             product = product,
+                            isLoggedIn = isLoggedIn,
                             onAddToCart = {
-                                userId?.let {
-                                    cartViewModel.agregarAlCarrito(it, product.id)
+                                if (!isLoggedIn) {
+                                    scope.launch {
+                                        snackbarHostState.showSnackbar(
+                                            message = "⚠️ Debes iniciar sesión para agregar productos",
+                                            duration = SnackbarDuration.Short
+                                        )
+                                    }
+                                    return@ProductCard
+                                }
+
+                                userId?.let { uid ->
+                                    println("🛒 Agregando producto ${product.id} para usuario $uid")
+                                    cartViewModel.agregarAlCarrito(uid, product.id)
+                                } ?: run {
+                                    scope.launch {
+                                        snackbarHostState.showSnackbar(
+                                            message = "❌ Error: Usuario no identificado",
+                                            duration = SnackbarDuration.Short
+                                        )
+                                    }
                                 }
                             }
                         )
@@ -202,6 +226,7 @@ fun ProductListScreen(
 @Composable
 private fun ProductCard(
     product: ProductoDto,
+    isLoggedIn: Boolean,
     onAddToCart: () -> Unit
 ) {
     ElevatedCard(
@@ -270,7 +295,8 @@ private fun ProductCard(
 
                 FilledTonalButton(
                     onClick = onAddToCart,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = isLoggedIn
                 ) {
                     Icon(
                         Icons.Filled.AddShoppingCart,
@@ -278,7 +304,7 @@ private fun ProductCard(
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(Modifier.width(8.dp))
-                    Text("Agregar al Carrito")
+                    Text(if (isLoggedIn) "Agregar al Carrito" else "Inicia sesión para comprar")
                 }
             }
 
@@ -302,8 +328,7 @@ private fun ProductCard(
                     Image(
                         bitmap = bitmap.asImageBitmap(),
                         contentDescription = product.nombre,
-                        modifier = Modifier
-                            .size(100.dp),
+                        modifier = Modifier.size(100.dp),
                         contentScale = ContentScale.Crop
                     )
                 } else {
