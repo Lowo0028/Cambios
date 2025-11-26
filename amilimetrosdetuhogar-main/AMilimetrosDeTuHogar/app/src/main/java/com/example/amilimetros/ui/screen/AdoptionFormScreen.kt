@@ -175,7 +175,6 @@ fun AdoptionFormScreen(
             Button(
                 onClick = {
                     if (direccion.isBlank()) {
-                        // Mostrar error
                         return@Button
                     }
                     viewModel.submitAdoptionForm(

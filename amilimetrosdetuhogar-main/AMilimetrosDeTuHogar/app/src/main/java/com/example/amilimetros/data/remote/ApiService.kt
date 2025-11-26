@@ -211,6 +211,7 @@ interface ApiService {
         @Body formulario: Map<String, Any>
     ): Response<FormularioAdopcionDto>
 
+
     @PUT("formularios/{id}/aprobar")
     suspend fun aprobarFormulario(
         @Path("id") id: Long,

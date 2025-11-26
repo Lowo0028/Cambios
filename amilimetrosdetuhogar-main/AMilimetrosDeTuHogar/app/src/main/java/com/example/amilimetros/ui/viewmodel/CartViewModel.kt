@@ -74,20 +74,26 @@ class CartViewModel(
             _error.value = null
 
             try {
-                println("🛒 Agregando producto $productoId al carrito del usuario $usuarioId")
+                println("🛒 [CartViewModel] Agregando al carrito:")
+                println("   └─ usuarioId: $usuarioId")
+                println("   └─ productoId: $productoId")
+                println("   └─ cantidad: $cantidad")
+
                 val request = AddToCartRequest(usuarioId, productoId, cantidad)
                 val result = carritoRepository.agregarAlCarrito(request)
 
                 if (result.isSuccess) {
-                    println("✅ Producto agregado exitosamente")
+                    println("✅ [CartViewModel] Producto agregado exitosamente")
                     _successMessage.value = "Producto agregado al carrito"
                     cargarCarrito(usuarioId)
                 } else {
-                    println("❌ Error al agregar: ${result.exceptionOrNull()?.message}")
-                    _error.value = result.exceptionOrNull()?.message ?: "Error al agregar"
+                    val errorMsg = result.exceptionOrNull()?.message ?: "Error desconocido"
+                    println("❌ [CartViewModel] Error: $errorMsg")
+                    _error.value = errorMsg
                 }
             } catch (e: Exception) {
-                println("❌ Excepción al agregar: ${e.message}")
+                println("❌ [CartViewModel] Excepción: ${e.message}")
+                e.printStackTrace()
                 _error.value = e.message
             } finally {
                 _isLoading.value = false

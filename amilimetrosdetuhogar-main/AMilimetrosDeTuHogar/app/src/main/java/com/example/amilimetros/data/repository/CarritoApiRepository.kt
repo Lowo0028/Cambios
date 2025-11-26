@@ -23,14 +23,25 @@ class CarritoApiRepository {
 
     suspend fun agregarAlCarrito(request: AddToCartRequest): Result<CarritoItemDto> {
         return try {
+            println("📡 [CarritoRepo] Llamando API /carrito/agregar")
+            println("   └─ Request: $request")
+
             val response = api.agregarAlCarrito(request)
+
+            println("📡 [CarritoRepo] Response code: ${response.code()}")
+            println("   └─ isSuccessful: ${response.isSuccessful}")
+
             if (response.isSuccessful && response.body() != null) {
+                println("✅ [CarritoRepo] Éxito: ${response.body()}")
                 Result.success(response.body()!!)
             } else {
                 val errorMsg = response.errorBody()?.string() ?: "Error al agregar al carrito"
+                println("❌ [CarritoRepo] Error: $errorMsg")
                 Result.failure(Exception(errorMsg))
             }
         } catch (e: Exception) {
+            println("❌ [CarritoRepo] Excepción: ${e.message}")
+            e.printStackTrace()
             Result.failure(e)
         }
     }

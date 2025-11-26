@@ -119,7 +119,7 @@ fun AdminProductsTab(
             else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 items(productos) { producto ->
                     AdminProductCard(producto, onDelete = {
-                        // Implementar eliminación
+                        viewModel.eliminarProducto(producto.id)
                     })
                 }
             }
@@ -128,10 +128,17 @@ fun AdminProductsTab(
 }
 
 @Composable
-fun AdminProductCard(producto: ProductoDto, onDelete: () -> Unit) {
+fun AdminProductCard(
+    producto: ProductoDto,
+    onDelete: () -> Unit
+) {
+    var showDeleteDialog by remember { mutableStateOf(false) }
+
     ElevatedCard(modifier = Modifier.fillMaxWidth()) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -141,14 +148,37 @@ fun AdminProductCard(producto: ProductoDto, onDelete: () -> Unit) {
                 Text(producto.categoria, style = MaterialTheme.typography.bodySmall)
             }
             Row {
-                IconButton(onClick = { /* Editar */ }) {
+                IconButton(onClick = { /* TODO: Editar */ }) {
                     Icon(Icons.Default.Edit, "Editar", tint = MaterialTheme.colorScheme.primary)
                 }
-                IconButton(onClick = onDelete) {
+                IconButton(onClick = { showDeleteDialog = true }) {
                     Icon(Icons.Default.Delete, "Eliminar", tint = MaterialTheme.colorScheme.error)
                 }
             }
         }
+    }
+
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Confirmar eliminación") },
+            text = { Text("¿Estás seguro de que deseas eliminar '${producto.nombre}'?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onDelete()
+                        showDeleteDialog = false
+                    }
+                ) {
+                    Text("Eliminar", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("Cancelar")
+                }
+            }
+        )
     }
 }
 
@@ -180,7 +210,7 @@ fun AdminAnimalsTab(
             else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 items(animales) { animal ->
                     AdminAnimalCard(animal, onDelete = {
-                        // Implementar eliminación
+                        viewModel.eliminarAnimal(animal.id)
                     })
                 }
             }
@@ -189,10 +219,17 @@ fun AdminAnimalsTab(
 }
 
 @Composable
-fun AdminAnimalCard(animal: AnimalDto, onDelete: () -> Unit) {
+fun AdminAnimalCard(
+    animal: AnimalDto,
+    onDelete: () -> Unit
+) {
+    var showDeleteDialog by remember { mutableStateOf(false) }
+
     ElevatedCard(modifier = Modifier.fillMaxWidth()) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -205,14 +242,37 @@ fun AdminAnimalCard(animal: AnimalDto, onDelete: () -> Unit) {
                 }
             }
             Row {
-                IconButton(onClick = { /* Editar */ }) {
+                IconButton(onClick = { /* TODO: Editar */ }) {
                     Icon(Icons.Default.Edit, "Editar", tint = MaterialTheme.colorScheme.primary)
                 }
-                IconButton(onClick = onDelete) {
+                IconButton(onClick = { showDeleteDialog = true }) {
                     Icon(Icons.Default.Delete, "Eliminar", tint = MaterialTheme.colorScheme.error)
                 }
             }
         }
+    }
+
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Confirmar eliminación") },
+            text = { Text("¿Estás seguro de que deseas eliminar '${animal.nombre}'?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onDelete()
+                        showDeleteDialog = false
+                    }
+                ) {
+                    Text("Eliminar", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("Cancelar")
+                }
+            }
+        )
     }
 }
 

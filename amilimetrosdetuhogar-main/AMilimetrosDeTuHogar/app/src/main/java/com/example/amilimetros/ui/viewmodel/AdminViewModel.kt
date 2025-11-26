@@ -30,6 +30,9 @@ class AdminViewModel(
     private val _successMessage = MutableStateFlow<String?>(null)
     val successMessage: StateFlow<String?> = _successMessage
 
+    // ✅ EMAIL ADMIN FIJO (del microservicio)
+    private val ADMIN_EMAIL = "admin@amilimetros.cl"
+
     fun cargarProductos() {
         viewModelScope.launch {
             _isLoading.value = true
@@ -48,11 +51,11 @@ class AdminViewModel(
         }
     }
 
-    fun eliminarProducto(productoId: Long, emailAdmin: String) {
+    fun eliminarProducto(productoId: Long) {
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                val result = productoRepository.eliminar(productoId, emailAdmin)
+                val result = productoRepository.eliminar(productoId, ADMIN_EMAIL)
                 if (result.isSuccess) {
                     _successMessage.value = "Producto eliminado"
                     cargarProductos()
@@ -85,11 +88,11 @@ class AdminViewModel(
         }
     }
 
-    fun eliminarAnimal(animalId: Long, emailAdmin: String) {
+    fun eliminarAnimal(animalId: Long) {
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                val result = animalRepository.eliminar(animalId, emailAdmin)
+                val result = animalRepository.eliminar(animalId, ADMIN_EMAIL)
                 if (result.isSuccess) {
                     _successMessage.value = "Animal eliminado"
                     cargarAnimales()
