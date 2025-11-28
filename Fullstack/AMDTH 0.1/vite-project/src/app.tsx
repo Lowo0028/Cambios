@@ -10,14 +10,14 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import AdminPage from "./pages/AdminPage";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
-import { useCarritoReal } from "./hooks/UseCarritoReal.ts"; // 👈 CAMBIO IMPORTANTE
+import { useCarritoReal } from "./hooks/UseCarritoReal.ts"; 
 import { AppDataProvider } from "./contexts/AppDataContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { FavoritesProvider } from "./contexts/FavoritesContext";
 import Carrito from "./pages/carritoPage";
 
 function AppRoutes() {
-  // 👇 USA EL HOOK REAL QUE SE CONECTA AL MICROSERVICIO
+  
   const {
     carrito,
     total,
