@@ -1,28 +1,34 @@
+// src/app.tsx - VERSIÓN ACTUALIZADA
 import React from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Layout from "./components/layouts/layouts";
 import Inicio from "./pages/inicio";
 import Tienda from "./components/tiendacomponents/tienda";
 import Adopcion from "./components/adopcioncomponents/adopcion";
-import CarritoPage from "./pages/carrito";
+import CarritoPage from "./pages/carritoPage";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import AdminPage from "./pages/AdminPage";
-import ProtectedRoute from "./components/auth/ProtectedRoute.tsx";
-import { useCarritoGlobal } from "./hooks/useCarrito";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
+import { useCarritoReal } from "./hooks/UseCarritoReal.ts"; // 👈 CAMBIO IMPORTANTE
 import { AppDataProvider } from "./contexts/AppDataContext";
 import { AuthProvider } from "./contexts/AuthContext";
+import { FavoritesProvider } from "./contexts/FavoritesContext";
+import Carrito from "./pages/carritoPage";
 
 function AppRoutes() {
+  // 👇 USA EL HOOK REAL QUE SE CONECTA AL MICROSERVICIO
   const {
     carrito,
     total,
+    loading,
     agregarAlCarrito,
     incrementar,
     decrementar,
     eliminarDelCarrito,
     limpiarCarrito,
-  } = useCarritoGlobal();
+    finalizarCompra,
+  } = useCarritoReal();
 
   return (
     <Routes>
@@ -62,13 +68,13 @@ function AppRoutes() {
         path="/carrito"
         element={
           <Layout>
-            <CarritoPage
+            <Carrito
               carrito={carrito}
               incrementar={incrementar}
               decrementar={decrementar}
               eliminarDelCarrito={eliminarDelCarrito}
-              total={total}
               limpiarCarrito={limpiarCarrito}
+              total={total}
             />
           </Layout>
         }
@@ -126,8 +132,6 @@ function AppRoutes() {
     </Routes>
   );
 }
-
-import { FavoritesProvider } from "./contexts/FavoritesContext";
 
 export default function App() {
   return (

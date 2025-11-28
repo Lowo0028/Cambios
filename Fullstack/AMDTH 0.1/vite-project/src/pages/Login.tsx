@@ -1,3 +1,4 @@
+// src/pages/Login.tsx - VERSIÓN ACTUALIZADA
 import React, { useState } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
@@ -27,8 +28,8 @@ export default function Login() {
       } else {
         setError("Credenciales incorrectas. Intenta nuevamente.");
       }
-    } catch (err) {
-      setError("Error al iniciar sesión. Intenta más tarde.");
+    } catch (err: any) {
+      setError(err.message || "Error al iniciar sesión. Intenta más tarde.");
     } finally {
       setLoading(false);
     }
@@ -95,6 +96,7 @@ export default function Login() {
               onChange={(e) => setEmail(e.target.value)}
               required
               placeholder="tu@correo.com"
+              disabled={loading}
               style={{
                 width: "100%",
                 padding: "0.8rem",
@@ -103,8 +105,6 @@ export default function Login() {
                 fontSize: "1rem",
                 transition: "border-color 0.3s",
               }}
-              onFocus={(e) => (e.target.style.borderColor = "#7e57c2")}
-              onBlur={(e) => (e.target.style.borderColor = "#ddd")}
             />
           </div>
 
@@ -125,6 +125,7 @@ export default function Login() {
               onChange={(e) => setPassword(e.target.value)}
               required
               placeholder="••••••••"
+              disabled={loading}
               style={{
                 width: "100%",
                 padding: "0.8rem",
@@ -133,8 +134,6 @@ export default function Login() {
                 fontSize: "1rem",
                 transition: "border-color 0.3s",
               }}
-              onFocus={(e) => (e.target.style.borderColor = "#7e57c2")}
-              onBlur={(e) => (e.target.style.borderColor = "#ddd")}
             />
           </div>
 
@@ -170,13 +169,10 @@ export default function Login() {
           }}
         >
           <p style={{ fontSize: "0.85rem", color: "#666", marginBottom: "0.5rem" }}>
-            <strong>Usuarios de prueba:</strong>
-          </p>
-          <p style={{ fontSize: "0.8rem", color: "#777", marginBottom: "0.3rem" }}>
-            👤 Usuario: usuario@demo.com / demo123
+            <strong>Usuario de prueba del microservicio:</strong>
           </p>
           <p style={{ fontSize: "0.8rem", color: "#777" }}>
-            👨‍💼 Admin: admin@amdth.com / admin123
+            👨‍💼 Admin: admin@amilimetros.cl / Admin123!
           </p>
         </div>
 

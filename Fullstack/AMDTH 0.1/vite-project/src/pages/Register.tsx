@@ -1,3 +1,4 @@
+// src/pages/Register.tsx - VERSIÓN ACTUALIZADA
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
@@ -5,6 +6,7 @@ import { useAuth } from "../contexts/AuthContext";
 export default function Register() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [telefono, setTelefono] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -28,18 +30,23 @@ export default function Register() {
       return;
     }
 
+    if (!telefono || telefono.trim().length < 8) {
+      setError("El teléfono debe tener al menos 8 dígitos");
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const success = await register(name, email, password);
+      const success = await register(name, email, telefono, password);
       
       if (success) {
         navigate("/");
       } else {
-        setError("El correo ya está registrado");
+        setError("Error al registrarse. El correo o teléfono puede estar en uso.");
       }
-    } catch (err) {
-      setError("Error al registrarse. Intenta más tarde.");
+    } catch (err: any) {
+      setError(err.message || "Error al registrarse. Intenta más tarde.");
     } finally {
       setLoading(false);
     }
@@ -106,6 +113,7 @@ export default function Register() {
               onChange={(e) => setName(e.target.value)}
               required
               placeholder="Tu nombre"
+              disabled={loading}
               style={{
                 width: "100%",
                 padding: "0.8rem",
@@ -133,6 +141,35 @@ export default function Register() {
               onChange={(e) => setEmail(e.target.value)}
               required
               placeholder="tu@correo.com"
+              disabled={loading}
+              style={{
+                width: "100%",
+                padding: "0.8rem",
+                border: "2px solid #ddd",
+                borderRadius: "8px",
+                fontSize: "1rem",
+              }}
+            />
+          </div>
+
+          <div style={{ marginBottom: "1.5rem" }}>
+            <label
+              style={{
+                display: "block",
+                fontWeight: 600,
+                color: "#444",
+                marginBottom: "0.5rem",
+              }}
+            >
+              Teléfono
+            </label>
+            <input
+              type="tel"
+              value={telefono}
+              onChange={(e) => setTelefono(e.target.value)}
+              required
+              placeholder="+56912345678"
+              disabled={loading}
               style={{
                 width: "100%",
                 padding: "0.8rem",
@@ -160,6 +197,7 @@ export default function Register() {
               onChange={(e) => setPassword(e.target.value)}
               required
               placeholder="Mínimo 6 caracteres"
+              disabled={loading}
               style={{
                 width: "100%",
                 padding: "0.8rem",
@@ -187,6 +225,7 @@ export default function Register() {
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
               placeholder="Repite tu contraseña"
+              disabled={loading}
               style={{
                 width: "100%",
                 padding: "0.8rem",

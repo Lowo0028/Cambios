@@ -1,6 +1,6 @@
+// src/contexts/AuthContext.tsx - VERSIÓN ACTUALIZADA
 import React, { createContext, useContext, useEffect, useState } from "react";
-
-
+import { authService, type User } from "../services/authService";
 
 interface AuthContextValue {
   isAuthenticated: boolean;
@@ -8,15 +8,8 @@ interface AuthContextValue {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
-  register: (name: string, email: string, password: string) => Promise<boolean>;
-}
-
-interface User {
-  id: number;
-  name: string;
-  email: string;
-  role: "user" | "admin";
-  createdAt: string;
+  register: (name: string, email: string, telefono: string, password: string) => Promise<boolean>;
+  loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -27,40 +20,16 @@ export const useAuth = () => {
   return ctx;
 };
 
-// Usuarios de prueba (en producción vendría de un backend)
-const MOCK_USERS = [
-  {
-    id: 1,
-    name: "Admin",
-    email: "admin@amdth.com",
-    password: "admin123",
-    role: "admin" as const,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: 2,
-    name: "Usuario Demo",
-    email: "usuario@demo.com",
-    password: "demo123",
-    role: "user" as const,
-    createdAt: new Date().toISOString(),
-  },
-];
-
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // ✅ useEffect #1: Cargar sesión desde localStorage al montar
+  // ✅ Cargar sesión desde localStorage al montar
   useEffect(() => {
     const loadSession = () => {
       try {
-        const savedUser = localStorage.getItem("amdth_user");
-        if (savedUser) {
-          setUser(JSON.parse(savedUser));
-        }
+        const currentUser = authService.getCurrentUser();
+        setUser(currentUser);
       } catch (error) {
         console.error("Error al cargar sesión:", error);
       } finally {
@@ -71,78 +40,61 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     loadSession();
   }, []);
 
-  // ✅ useEffect #2: Guardar usuario en localStorage cuando cambie
-  useEffect(() => {
-    if (user) {
-      localStorage.setItem("amdth_user", JSON.stringify(user));
-    } else {
-      localStorage.removeItem("amdth_user");
-    }
-  }, [user]);
-
-  // ✅ useEffect #3: Timeout de sesión automático (30 minutos)
-  useEffect(() => {
-    if (!user) return;
-
-    const timeout = setTimeout(() => {
-      alert("Tu sesión ha expirado por inactividad");
-      logout();
-    }, 30 * 60 * 1000); // 30 minutos
-
-    return () => clearTimeout(timeout);
-  }, [user]);
-
+  // ✅ Login con microservicio
   const login = async (email: string, password: string): Promise<boolean> => {
-    // Simular llamada a API
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const foundUser = MOCK_USERS.find(
-          (u) => u.email === email && u.password === password
-        );
+    try {
+      const response = await authService.login({ 
+        email, 
+        contrasena: password 
+      });
 
-        if (foundUser) {
-          const { password: _, ...userWithoutPassword } = foundUser;
-          setUser(userWithoutPassword);
-          resolve(true);
-        } else {
-          resolve(false);
-        }
-      }, 800); // Simular latencia de red
-    });
+      if (response.success) {
+        const currentUser = authService.getCurrentUser();
+        setUser(currentUser);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Error en login:", error);
+      return false;
+    }
   };
 
+  // ✅ Registro con microservicio
   const register = async (
     name: string,
     email: string,
+    telefono: string,
     password: string
   ): Promise<boolean> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        // Verificar si el email ya existe
-        if (MOCK_USERS.find((u) => u.email === email)) {
-          resolve(false);
-          return;
-        }
+    try {
+      const newUser = await authService.register({
+        nombre: name,
+        email,
+        telefono,
+        contrasena: password
+      });
 
-        const newUser: User = {
-          id: Date.now(),
-          name,
-          email,
-          role: "user",
-          createdAt: new Date().toISOString(),
-        };
-
+      if (newUser) {
+        // Auto-login después del registro
+        localStorage.setItem('user', JSON.stringify(newUser));
         setUser(newUser);
-        resolve(true);
-      }, 800);
-    });
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Error en registro:", error);
+      return false;
+    }
   };
 
+  // ✅ Logout
   const logout = () => {
+    authService.logout();
     setUser(null);
-    localStorage.removeItem("amdth_user");
   };
 
+  // Loading screen mientras se carga la sesión
   if (loading) {
     return (
       <div
@@ -176,11 +128,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     <AuthContext.Provider
       value={{
         isAuthenticated: !!user,
-        isAdmin: user?.role === "admin",
+        isAdmin: user?.isAdmin || false,
         user,
         login,
         logout,
         register,
+        loading
       }}
     >
       {children}
@@ -188,11 +141,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 };
 
-// Agregar animación al CSS global
-const style = document.createElement("style");
-style.textContent = `
-  @keyframes spin {
-    to { transform: rotate(360deg); }
+// Agregar animación al CSS global (si no existe)
+if (typeof document !== 'undefined') {
+  const style = document.createElement("style");
+  style.textContent = `
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  `;
+  if (!document.head.querySelector('style[data-spin-animation]')) {
+    style.setAttribute('data-spin-animation', 'true');
+    document.head.appendChild(style);
   }
-`;
-document.head.appendChild(style);
+}
